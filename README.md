@@ -2,5 +2,6 @@
 ### Key Functionalities:
   1. Dynamic Prompt Templates
   2. LLM Chains
-  3. Agents
-  4. Tools
+  3. RAG
+  4. Agents
+  5. Tools
