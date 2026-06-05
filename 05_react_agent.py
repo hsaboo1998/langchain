@@ -5,6 +5,11 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 
 import os
+import certifi
+os.environ['SSL_CERT_FILE'] = certifi.where()
+from dotenv import load_dotenv
+load_dotenv()
+
 # ----------------------------------- old style react agent ----------------------------------------------
 # Agents use LLM as reasoning engine to identify appropriate set of actions and verify the input and output to llm.
 # ReAct(Reasoning + Action) -  Reason, Act, Observation, Repeat, Final Answer
@@ -46,20 +51,30 @@ llm = ChatOpenAI(
     model="deepseek/deepseek-chat",
     temperature=0
 )
-react_agent = create_react_agent(llm, [run_python_code], prompt)
-# Agent Executor
+# react_agent = create_react_agent(llm, [run_python_code], prompt)
+## Agent Executor (fixed loop structure)
 # Handles orchestration between agent reasoning and tool execution.
 # Sends initial query to agent, parses agents response to identify tool calls,
 # executes the tool, feeds result back to agent until final answer,
 # handles parsing errors and implement retry logic for failed executors
 # maintain conversation history using memory
 # can enforce max iterations and timeout to prevent infinite loops
-agent_executor = AgentExecutor(
-    agent=react_agent,
-    tools=[run_python_code],
-    handle_parsing_errors=True,
-    max_iterations=50,
-    max_execution_time=120,
-    verbose=True
-)
-print(agent_executor.invoke({"input":"What is the standard deviation in these comma separated values: 1,2,3,4,5?"}))
+# agent_executor = AgentExecutor(
+#     agent=react_agent,
+#     tools=[run_python_code],
+#     handle_parsing_errors=True,
+#     max_iterations=50,
+#     max_execution_time=120,
+#     verbose=True
+# )
+# print(agent_executor.invoke({"input":"What is the standard deviation in these comma separated values: 1,2,3,4,5?"}))
+
+## Langgraph (graph based agent that works with chat models and supports tool calls)
+# The key nodes present in Langraph create_react_agent are 
+# Agent Node - Calls LLM with message history, 
+# Tool Node - Execute any tools from LLM response, 
+# Continue/End Node - Manage the workflow based on whether tool calls are present
+from langgraph.prebuilt import create_react_agent
+agent_exec = create_react_agent(model=llm, tools=[run_python_code])
+messages = agent_exec.invoke({"messages": [("human", "Subtract 20 and 10")]})
+print(messages['messages'][-1].content)
