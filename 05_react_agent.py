@@ -51,23 +51,26 @@ llm = ChatOpenAI(
     model="deepseek/deepseek-chat",
     temperature=0
 )
-# react_agent = create_react_agent(llm, [run_python_code], prompt)
+# reason one step at a time without the agent executor
+react_agent = create_react_agent(llm, [run_python_code], prompt)
 ## Agent Executor (fixed loop structure)
-# Handles orchestration between agent reasoning and tool execution.
+# The ReAct style agents perform step by step reasoning loop. But they are designed to operate one step at a time.
+# So instead of manually managing each step, we can use AgentExecutor which manages the full-tool loop behind the scense.It automatically runs teh agent, 
+# executes the tools and track the intermediate steps 
 # Sends initial query to agent, parses agents response to identify tool calls,
 # executes the tool, feeds result back to agent until final answer,
 # handles parsing errors and implement retry logic for failed executors
 # maintain conversation history using memory
 # can enforce max iterations and timeout to prevent infinite loops
-# agent_executor = AgentExecutor(
-#     agent=react_agent,
-#     tools=[run_python_code],
-#     handle_parsing_errors=True,
-#     max_iterations=50,
-#     max_execution_time=120,
-#     verbose=True
-# )
-# print(agent_executor.invoke({"input":"What is the standard deviation in these comma separated values: 1,2,3,4,5?"}))
+agent_executor = AgentExecutor(
+    agent=react_agent,
+    tools=[run_python_code],
+    handle_parsing_errors=True,
+    max_iterations=50,
+    max_execution_time=120,
+    verbose=True
+)
+print(agent_executor.invoke({"input":"What is the standard deviation in these comma separated values: 1,2,3,4,5?"}))
 
 ## Langgraph (graph based agent that works with chat models and supports tool calls)
 # The key nodes present in Langraph create_react_agent are 
